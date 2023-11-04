@@ -14,11 +14,9 @@ export default function Home() {
     const nftMarketplaceAddress = networkMapping[chainString]["NftMarketplace"].slice(-1)[0];
     const dynamicSvgNftAddress = networkMapping[chainString]["DynamicSvgNft"].slice(-1)[0];
     const basicIpfsNftAddress = networkMapping[chainString]["BasicIpfsNft"].slice(-1)[0];
-
     const dispatch = useNotification();
     const { runContractFunction } = useWeb3Contract();
     const [provider, setProvider] = useState({});
-    const [proceeds, setProceeds] = useState("0");
     const [svgNftMintFee, setSvgNftMintFee] = useState("0");
 
     async function approveAndListFormNft(data) {
@@ -115,19 +113,6 @@ export default function Home() {
         });
     }
 
-    async function withdrawProceeds() {
-        await runContractFunction({
-            params: {
-                abi: nftMarketplaceAbi,
-                contractAddress: nftMarketplaceAddress,
-                functionName: "withdrawProceeds",
-                params: {},
-            },
-            onError: (error) => console.log(error),
-            onSuccess: () => handleWithdrawSuccessNotification,
-        })
-    }
-
     async function handleApproveSuccess(tx, nftAddress, tokenId, price) {
         console.log("Listing NFT...");
         await tx.wait(1);
@@ -162,15 +147,6 @@ export default function Home() {
             type: "success",
             message: "NFT successfully listed",
             title: "NFT listed",
-            position: "topR",
-        });
-    }
-
-    const handleWithdrawSuccessNotification = () => {
-        dispatch({
-            type: "success",
-            message: "Proceeds withdrawn",
-            title: "Proceeds withdrawn",
             position: "topR",
         });
     }
@@ -219,21 +195,6 @@ export default function Home() {
         if (svgNftMintFee) {
             setSvgNftMintFee(svgNftMintFee);
         }
-
-        const returnedProceeds = await runContractFunction({
-            params: {
-                abi: nftMarketplaceAbi,
-                contractAddress: nftMarketplaceAddress,
-                functionName: "getProceeds",
-                params: {
-                    seller: account,
-                },
-            },
-            onError: (error) => console.log(error),
-        })
-        if (returnedProceeds) {
-            setProceeds(returnedProceeds.toString());
-        }
     }
 
     useEffect(() => {
@@ -241,7 +202,7 @@ export default function Home() {
             setProvider(new ethers.providers.Web3Provider(window.ethereum));
             setupUI();
         }
-    }, [proceeds, account, isWeb3Enabled, chainId]);
+    }, [ account, isWeb3Enabled, chainId]);
 
     const formInputsData = [
         {
@@ -308,16 +269,6 @@ export default function Home() {
                         id="NFT Form"
                         buttonConfig={ { theme: 'primary' } }
                     />
-                    <div>Withdraw { proceeds } proceeds</div>
-                    {proceeds != "0" ? (
-                        <Button
-                            onClick={ withdrawProceeds }
-                            text="Withdraw"
-                            type="button"
-                        />
-                    ) : (
-                        <div>No proceeds available</div>
-                    )}
                 </div>
             </div>
         </div>
