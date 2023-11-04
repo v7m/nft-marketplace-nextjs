@@ -8,7 +8,7 @@ import NFTBox from "../components/NFTBox";
 export default function Home() {
     const { chainId, isWeb3Enabled } = useMoralis();
     const chainString = chainId ? parseInt(chainId).toString() : null;
-    const marketplaceAddress = chainId ? networkMapping[chainString].NftMarketplace[0] : null;
+    const nftMarketplaceAddress = chainId ? networkMapping[chainString].NftMarketplace[0] : null;
 
     const { loading, error, data: listedNfts } = useQuery(GET_ACTIVE_ITEMS);
 
@@ -22,12 +22,12 @@ export default function Home() {
                     ) : (
                         listedNfts.activeItems.map((nft) => {
                             const { price, nftAddress, tokenId, seller } = nft
-                            return marketplaceAddress ? (
+                            return nftMarketplaceAddress ? (
                                 <NFTBox
                                     price={ price }
                                     nftAddress={ nftAddress }
                                     tokenId={ tokenId }
-                                    marketplaceAddress={ marketplaceAddress }
+                                    nftMarketplaceAddress={ nftMarketplaceAddress }
                                     seller={ seller }
                                     key={ `${nftAddress}${tokenId}` }
                                 />
