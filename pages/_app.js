@@ -2,6 +2,7 @@ import { MoralisProvider } from "react-moralis";
 import { NotificationProvider } from "web3uikit";
 import { ApolloProvider, ApolloClient, InMemoryCache } from "@apollo/client";
 import "../styles/globals.css";
+import Footer from "../components/Footer";
 import Header from "../components/Header";
 import Head from "next/head";
 
@@ -21,8 +22,13 @@ export default function MyApp({ Component, pageProps }) {
             <MoralisProvider initializeOnMount={false}>
                 <ApolloProvider client={client}>
                     <NotificationProvider>
-                        <Header />
-                        <Component {...pageProps} />
+                        <div className="flex flex-col h-screen justify-between">
+                            <Header />
+                            <div className="mb-auto">
+                                <Component {...pageProps} />
+                            </div>
+                            <Footer />
+                        </div>
                     </NotificationProvider>
                 </ApolloProvider>
             </MoralisProvider>

@@ -16,7 +16,7 @@ export default function Home() {
         <div className="container mx-auto">
             <div className="grid grid-cols-9 gap-4">
                 <div className="col-start-2 col-span-7">
-                    <h2 className="text-4xl font-extrabold mb-6 mt-6">Recently Listed <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">NFT</span></h2>
+                    <h2 className="text-4xl font-extrabold mb-6 mt-8">Recently Listed <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">NFT</span></h2>
                     <div className="flex flex-wrap">
                         {isWeb3Enabled && chainId ? (
                             loading || !listedNfts ? (
@@ -39,7 +39,7 @@ export default function Home() {
                                 })
                             )
                         ) : (
-                            <div>Web3 Currently Not Enabled</div>
+                            <div>Web3 Currently Not Enabled. Please, connect a wallet.</div>
                         )}
                     </div>
                 </div>
