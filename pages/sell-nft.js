@@ -273,7 +273,7 @@ export default function Home() {
                 required: true,
                 numberMin: ethers.utils.formatUnits(svgNftMintFee, "ether"),
             },
-            step: 0.1,
+            step: ethers.utils.formatUnits(svgNftMintFee, "ether")
         },
     ];
 
@@ -281,12 +281,12 @@ export default function Home() {
         <div className={ styles.container }>
             <div className="grid grid-cols-7 gap-4">
                 <div className="col-start-2 col-span-4">
-                    <h2 className="text-4xl font-extrabold mt-12">Mint and list new <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">NFT</span></h2>
+                    <h2 className="text-4xl font-extrabold mt-12">Mint and List new <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">NFT</span></h2>
                     <p className="mb-6 mt-3"><em>It will require several transactions and will take a while.</em></p>
                     <div className="mb-6 pl-4">
                         <Button
                             color="blue"
-                            text="Mint Basic IPFS NFT"
+                            text="Mint Basic IPFS NFT (free)"
                             theme="colored"
                             size="large"
                             onClick={ mintBasicIpfsNft }
@@ -295,7 +295,7 @@ export default function Home() {
                     <div className="mb-9 pl-4">
                         <Button
                             color="blue"
-                            text="Mint random on-chain SVG NFT"
+                            text="Mint random on-chain SVG NFT (0.01 ETH)"
                             theme="colored"
                             size="large"
                             onClick={ requestSvgNftMint }
@@ -308,7 +308,6 @@ export default function Home() {
                         id="NFT Form"
                         buttonConfig={ { theme: 'primary' } }
                     />
-
                     <div>Withdraw { proceeds } proceeds</div>
                     {proceeds != "0" ? (
                         <Button

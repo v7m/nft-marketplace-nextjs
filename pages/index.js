@@ -14,31 +14,35 @@ export default function Home() {
 
     return (
         <div className="container mx-auto">
-            <h1 className="py-4 px-4 font-bold text-2xl">Recently Listed</h1>
-            <div className="flex flex-wrap">
-                {isWeb3Enabled && chainId ? (
-                    loading || !listedNfts ? (
-                        <div>Loading NFTs...</div>
-                    ) : (
-                        listedNfts.activeItems.map((nft) => {
-                            const { price, nftAddress, tokenId, seller } = nft
-                            return nftMarketplaceAddress ? (
-                                <NFTBox
-                                    price={ price }
-                                    nftAddress={ nftAddress }
-                                    tokenId={ tokenId }
-                                    nftMarketplaceAddress={ nftMarketplaceAddress }
-                                    seller={ seller }
-                                    key={ `${nftAddress}${tokenId}` }
-                                />
+            <div className="grid grid-cols-9 gap-4">
+                <div className="col-start-2 col-span-7">
+                    <h2 className="text-4xl font-extrabold mb-6 mt-6">Recently Listed <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">NFT</span></h2>
+                    <div className="flex flex-wrap">
+                        {isWeb3Enabled && chainId ? (
+                            loading || !listedNfts ? (
+                                <div>Loading NFTs...</div>
                             ) : (
-                                <div>Network error, please switch to a supported network (Sepolia). </div>
-                            );
-                        })
-                    )
-                ) : (
-                    <div>Web3 Currently Not Enabled</div>
-                )}
+                                listedNfts.activeItems.map((nft) => {
+                                    const { price, nftAddress, tokenId, seller } = nft
+                                    return nftMarketplaceAddress ? (
+                                        <NFTBox
+                                            price={ price }
+                                            nftAddress={ nftAddress }
+                                            tokenId={ tokenId }
+                                            nftMarketplaceAddress={ nftMarketplaceAddress }
+                                            seller={ seller }
+                                            key={ `${nftAddress}${tokenId}` }
+                                        />
+                                    ) : (
+                                        <div>Network error, please switch to a supported network (Sepolia). </div>
+                                    );
+                                })
+                            )
+                        ) : (
+                            <div>Web3 Currently Not Enabled</div>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );

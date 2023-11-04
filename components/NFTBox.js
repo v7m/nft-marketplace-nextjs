@@ -137,7 +137,7 @@ export default function NFTBox({ price, nftAddress, tokenId, nftMarketplaceAddre
                         nftAddress={ nftAddress }
                         onClose={ hideModal }
                     />
-                    <div className="w-[250px]">
+                    <div className="w-[250px] m-0.5">
                         <Card
                             title={ tokenName }
                             description={ tokenDescription }
@@ -159,7 +159,7 @@ export default function NFTBox({ price, nftAddress, tokenId, nftMarketplaceAddre
                     </div>
                 </div>
             ) : (
-                <div>Loading...</div>
+                <div>Loading NFT...</div>
             )}
         </div>
     );
