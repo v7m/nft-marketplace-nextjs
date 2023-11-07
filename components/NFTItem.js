@@ -22,7 +22,7 @@ const truncateStr = (fullStr, strLength) => {
     );
 }
 
-export default function NFTBox({ price, nftAddress, tokenId, nftMarketplaceAddress, seller }) {
+export default function NFTItem({ price, nftAddress, tokenId, nftMarketplaceAddress, seller }) {
     const { isWeb3Enabled, account } = useMoralis();
     const [imageURI, setImageURI] = useState("");
     const [svgImage, setSvgImage] = useState("");
@@ -141,13 +141,16 @@ export default function NFTBox({ price, nftAddress, tokenId, nftMarketplaceAddre
                         <Card
                             title={ tokenName }
                             description={ tokenDescription }
+                            checkMarkPosition="right"
+                            tooltipText={ <span className="whitespace-nowrap">NFT address: { nftAddress } </span> }
                             onClick={ handleCardClick }
                         >
                             <div className="p-2">
                                 <div className="flex flex-col items-end gap-2">
-                                    <div>tokenID: { tokenId }</div>
+                                    <div className="mt-5 text-sm">
+                                        tokenId: { tokenId }</div>
                                     <div className="italic text-sm">
-                                        Owned by { formattedSellerAddress }
+                                        Owner: { formattedSellerAddress }
                                     </div>
                                     <img src={ nftImageSrc() } width={ 200 } height={ 200 } />
                                     <div className="font-bold">

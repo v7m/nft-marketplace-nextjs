@@ -3,7 +3,7 @@ import { useQuery } from "@apollo/client";
 import networkMapping from "../constants/networkMapping.json";
 import GET_ACTIVE_ITEMS from "../constants/subgraphQueries";
 import styles from "../styles/Home.module.css";
-import NFTBox from "../components/NFTBox";
+import NFTItem from "../components/NFTItem";
 
 export default function Home() {
     const { chainId, isWeb3Enabled } = useMoralis();
@@ -26,7 +26,7 @@ export default function Home() {
                                 listedNfts.activeItems.map((nft) => {
                                     const { price, nftAddress, tokenId, seller } = nft
                                     return nftMarketplaceAddress ? (
-                                        <NFTBox
+                                        <NFTItem
                                             price={ price }
                                             nftAddress={ nftAddress }
                                             tokenId={ tokenId }
