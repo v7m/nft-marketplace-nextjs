@@ -11,6 +11,8 @@ import dynamicSvgNftAbi from "../constants/DynamicSvgNftAbi.json";
 import basicIpfsNftAbi from "../constants/BasicIpfsNftAbi.json";
 import networkMapping from "../constants/networkMapping.json";
 
+const ETHERSCAN_URL_PREFIX = "https://sepolia.etherscan.io/tx/";
+
 const mintAndListNftStateMachine = createMachine({
     id: "mint-and-list-nft",
     initial: "idle",
@@ -65,6 +67,8 @@ export default function Home() {
     const [nftProcessing, setNftProcessing] = useMachine(nftProcessingStateMachine);
     const [provider, setProvider] = useState({});
     const [svgNftMintFee, setSvgNftMintFee] = useState("0");
+    const [pendingTransactionHash, setPendingTransactionHash] = useState(null);
+
 
     // APPROVE AND LIST FUNCTIONS
 
@@ -170,9 +174,11 @@ export default function Home() {
     // HANDLE SUCCESS/ERROR FUNCTIONS
 
     async function handleApproveSuccess(tx, nftAddress, tokenId, price) {
-        setNewNftState('approvingInitiated')
+        setNewNftState('approvingInitiated');
+        setPendingTransactionHash(tx.hash);
         await tx.wait(1);
         setNewNftState('approvingCompleted');
+        setPendingTransactionHash(null);
 
         await runContractFunction({
             params: {
@@ -192,18 +198,22 @@ export default function Home() {
 
     async function handleListingSuccess(tx) {
         setNewNftState('listingInitiated');
+        setPendingTransactionHash(tx.hash);
         await tx.wait(1);
         setNftProcessing('processNone');
         setNewNftState('listingCompleted');
+        setPendingTransactionHash(null);
         handleListSuccessNotification();
     }
 
     async function handleMintBasicIpfsNftSuccess(tx) {
         setNewNftState('mintingInitiated');
+        setPendingTransactionHash(tx.hash);
 
         const mintTxReceipt = await tx.wait(1);
 
         setNewNftState('mintingCompleted');
+        setPendingTransactionHash(null);
         handleMintBasicIpfsNftSuccessNotification();
 
         const tokenId = mintTxReceipt.events[0].args.tokenId;
@@ -213,19 +223,21 @@ export default function Home() {
 
     async function handleRequestSvgNftMintSuccess(tx) {
         setNewNftState('mintingInitiated');
+        setPendingTransactionHash(tx.hash);
         await tx.wait(1);
+        setPendingTransactionHash(null);
         handleRequestSvgNftMintSuccessNotification();
     }
 
     const handleTransactionError = (error) => {
-        console.log(error);
         setNewNftState('requestCompleted');
+        setPendingTransactionHash(null);
+        console.log(error);
     }
-
 
     // NOTIFICATIONS
 
-    async function handleListSuccessNotification() {
+    const handleListSuccessNotification = () => {
         dispatch({
             type: "success",
             message: "NFT successfully listed",
@@ -381,6 +393,10 @@ export default function Home() {
         return !["idle", "requested"].some(newNftState.matches);
     }
 
+    const pendingTransactionUrl = () => {
+        return ETHERSCAN_URL_PREFIX + pendingTransactionHash;
+    }
+
     const formInputsData = [
         {
             name: "NFT Address",
@@ -458,7 +474,17 @@ export default function Home() {
                                 <div>
                                     { showBasicNftProgress() ? (
                                         <div className="mb-6 px-4">
-                                            <div className="italic text-sm mb-2">{ mintAndListStatusUIData()["info"] }</div>
+                                            <div className="italic text-sm mb-2">
+                                                { mintAndListStatusUIData()["info"] }
+                                                { pendingTransactionHash ? (
+                                                    <span>
+                                                        &nbsp;Check on&nbsp;
+                                                        <a href={ pendingTransactionUrl() } className="font-medium text-blue-600 dark:text-blue-500 hover:underline" target="_blank">Etherscan</a>.
+                                                    </span>
+                                                ) : (
+                                                    null
+                                                ) }
+                                            </div>
                                             <div className="w-full bg-gray-200 rounded-full dark:bg-gray-700">
                                                 <div className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={ { width: `${ mintAndListStatusUIData()["progress"] }%` } }>
                                                     <div>
@@ -491,11 +517,21 @@ export default function Home() {
                                 </div>
                             </div>
                             <div className="mb-6">
-                                <h3 className="text-xl font-bold mb-5">Random on-chain SVG NFT (0.01 ETH)</h3>
+                                <h3 className="text-xl font-bold mb-5">Dynamic on-chain SVG NFT (0.01 ETH)</h3>
                                 <div>
                                     { showDynamicNftProgress() ? (
                                         <div className="mb-6 px-4">
-                                            <div className="italic text-sm mb-2">{ mintAndListStatusUIData()["info"] }</div>
+                                            <div className="italic text-sm mb-2">
+                                                { mintAndListStatusUIData()["info"] }
+                                                { pendingTransactionHash ? (
+                                                    <span>
+                                                        &nbsp;Check on&nbsp;
+                                                        <a href={ pendingTransactionUrl() } className="font-medium text-blue-600 dark:text-blue-500 hover:underline" target="_blank">Etherscan</a>.
+                                                    </span>
+                                                ) : (
+                                                    null
+                                                ) }
+                                            </div>
                                             <div className="w-full bg-gray-200 rounded-full dark:bg-gray-700">
                                                 <div className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={ { width: `${ mintAndListStatusUIData()["progress"] }%` } }>
                                                     <div>
