@@ -2,7 +2,7 @@ import { Button } from "web3uikit";
 
 const ETHERSCAN_URL_PREFIX = "https://sepolia.etherscan.io/tx/";
 
-export default function ListNewNFTButton({ showProgress, newNftState, pendingTransactionHash, mintNftCallback }) {
+export default function NewNFTButton({ showProgress, newNftState, pendingTransactionHash, mintNftCallback }) {
     const pendingTransactionUrl = () => {
         return ETHERSCAN_URL_PREFIX + pendingTransactionHash;
     }

@@ -1,4 +1,4 @@
-import { Form, useNotification, Button } from "web3uikit";
+import { useNotification } from "web3uikit";
 import { useMoralis, useWeb3Contract } from "react-moralis";
 import { ethers } from "ethers";
 import React, { useEffect, useState } from "react";
@@ -10,7 +10,8 @@ import nftMarketplaceAbi from "../constants/NftMarketplaceAbi.json";
 import dynamicSvgNftAbi from "../constants/DynamicSvgNftAbi.json";
 import basicIpfsNftAbi from "../constants/BasicIpfsNftAbi.json";
 import networkMapping from "../constants/networkMapping.json";
-import ListNewNFTButton from "../components/ListNewNFTButton"
+import NewNFTButton from "../components/NewNFTButton";
+import ExistingNFTForm from "../components/ExistingNFTForm";
 
 const mintAndListNftStateMachine = createMachine({
     id: "mint-and-list-nft",
@@ -324,40 +325,6 @@ export default function Home() {
         return (nftProcessing.matches('dynamic') && !newNftState.matches('idle'));
     }
 
-    const formInputsData = [
-        {
-            name: "NFT Address",
-            type: "text",
-            inputWidth: "100%",
-            value: "",
-            key: "nftAddress",
-            validation: {
-                numberMax: 42,
-                numberMin: 42,
-                required: true,
-            },
-        },
-        {
-            name: "Token ID",
-            type: "number",
-            value: "",
-            key: "tokenId",
-            validation: {
-                required: true,
-            },
-        },
-        {
-            name: "Price (ETH)",
-            type: "number",
-            key: "price",
-            validation: {
-                required: true,
-                numberMin: ethers.utils.formatUnits(svgNftMintFee, "ether"),
-            },
-            step: ethers.utils.formatUnits(svgNftMintFee, "ether")
-        },
-    ];
-
     useEffect(() => {
         if (isWeb3Enabled) {
             setProvider(new ethers.providers.Web3Provider(window.ethereum));
@@ -372,8 +339,7 @@ export default function Home() {
                     <div className="mb-4 border-b w-fit border-gray-200 dark:border-gray-700">
                         <ul className="flex flex-wrap -mb-px text-lg font-medium text-center text-gray-500 dark:text-gray-400" id="list-nft" role="tablist">
                             <li className="mr-2" role="presentation">
-                                <button
-                                    className="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                <button className="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                                     id="list-new-nft-tab"
                                     type="button"
                                     role="tab"
@@ -398,7 +364,7 @@ export default function Home() {
                             <h2 className="text-4xl font-extrabold mb-6 mt-8">Mint and List new <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">NFT</span></h2>
                             <div className="mb-6">
                                 <h3 className="text-xl font-bold mb-3">Basic IPFS NFT (free)</h3>
-                                <ListNewNFTButton
+                                <NewNFTButton
                                     showProgress={ showBasicNftProgress() }
                                     newNftState={ newNftState }
                                     pendingTransactionHash={ pendingTransactionHash }
@@ -407,7 +373,7 @@ export default function Home() {
                             </div>
                             <div className="mb-6">
                                 <h3 className="text-xl font-bold mb-5">Dynamic on-chain SVG NFT (0.01 ETH)</h3>
-                                <ListNewNFTButton
+                                <NewNFTButton
                                     showProgress={ showDynamicNftProgress() }
                                     newNftState={ newNftState }
                                     pendingTransactionHash={ pendingTransactionHash }
@@ -418,11 +384,9 @@ export default function Home() {
                         </div>
                         <div className="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="list-existing-nft-form" role="tabpanel" aria-labelledby="ist-existing-nft-tab">
                             <h2 className="text-4xl font-extrabold mb-6 mt-8">List existed <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">NFT</span></h2>
-                            <Form
-                                onSubmit={ approveAndListFormNft }
-                                data={ formInputsData }
-                                id="NFT Form"
-                                buttonConfig={ { theme: 'primary' } }
+                            <ExistingNFTForm
+                                approveAndListNftCallback={ approveAndListFormNft }
+                                svgNftMintFee={ svgNftMintFee }
                             />
                         </div>
                     </div>
