@@ -325,12 +325,71 @@ export default function Home() {
         return (nftProcessing.matches('dynamic') && !newNftState.matches('idle'));
     }
 
+    const showExistingNftProgress = () => {
+        return (nftProcessing.matches('form') && !newNftState.matches('idle'));
+    }
+
     useEffect(() => {
         if (isWeb3Enabled) {
             setProvider(new ethers.providers.Web3Provider(window.ethereum));
             setupUI();
         }
     }, [ account, isWeb3Enabled, chainId]);
+
+    const mintingNftStatusUIData = () => {
+        const data = {
+            idle: {
+                progressInfo: "",
+                progressBarPercentage: 0,
+                progressBarText: "",
+                buttonText: "Mint & List NFT",
+            },
+            requested: {
+                progressInfo: "Please confirm the NFT mint in your wallet.",
+                progressBarPercentage: 4,
+                progressBarText: "",
+                buttonText: "NFT Minting...",
+            },
+            minting: {
+                progressInfo: "Pending transaction confirmation...",
+                progressBarPercentage: 17,
+                progressBarText: "Minting...",
+                buttonText: "NFT Minting...",
+            },
+            minted: {
+                progressInfo: "NFT successfully minted. Please confirm the NFT approving in your wallet.",
+                progressBarPercentage: 34,
+                progressBarText: "Approving...",
+                buttonText: "NFT Approving...",
+            },
+            approving: {
+                progressInfo: "Pending transaction confirmation...",
+                progressBarPercentage: 50,
+                progressBarText: "Approving...",
+                buttonText: "NFT Approving...",
+            },
+            approved: {
+                progressInfo: "NFT successfully approved. Please confirm the NFT listing in your wallet.",
+                progressBarPercentage: 66,
+                progressBarText: "Listing...",
+                buttonText: "NFT Listing...",
+            },
+            listing: {
+                progressInfo: "Pending transaction confirmation...",
+                progressBarPercentage: 84,
+                progressBarText: "Listing...",
+                buttonText: "NFT Listing...",
+            },
+            listed: {
+            progressInfo: "NFT successfully listed on marketplace!",
+                progressBarPercentage: 100,
+                progressBarText: "Completed!",
+                buttonText: "Mint & List NFT",
+            },
+        }
+
+        return data[newNftState.value];
+    }
 
     return (
         <div className={ styles.container }>
@@ -339,7 +398,7 @@ export default function Home() {
                     <div className="mb-4 border-b w-fit border-gray-200 dark:border-gray-700">
                         <ul className="flex flex-wrap -mb-px text-lg font-medium text-center text-gray-500 dark:text-gray-400" id="list-nft" role="tablist">
                             <li className="mr-2" role="presentation">
-                                <button className="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                <button className="inline-block p-4 border-b-2 font-bold border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                                     id="list-new-nft-tab"
                                     type="button"
                                     role="tab"
@@ -349,7 +408,7 @@ export default function Home() {
                             </li>
                             <li className="mr-2" role="presentation">
                                 <button
-                                    className="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                    className="inline-block p-4 border-b-2 font-bold border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                                     id="list-existing-nft-tab"
                                     type="button"
                                     role="tab"
@@ -367,6 +426,7 @@ export default function Home() {
                                 <NewNFTButton
                                     showProgress={ showBasicNftProgress() }
                                     newNftState={ newNftState }
+                                    mintingNftStatusUIData={ mintingNftStatusUIData() }
                                     pendingTransactionHash={ pendingTransactionHash }
                                     mintNftCallback={ mintBasicIpfsNft }
                                 />
@@ -376,6 +436,7 @@ export default function Home() {
                                 <NewNFTButton
                                     showProgress={ showDynamicNftProgress() }
                                     newNftState={ newNftState }
+                                    mintingNftStatusUIData={ mintingNftStatusUIData() }
                                     pendingTransactionHash={ pendingTransactionHash }
                                     mintNftCallback={ requestDynamicSvgNftMint }
                                 />
@@ -385,8 +446,12 @@ export default function Home() {
                         <div className="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="list-existing-nft-form" role="tabpanel" aria-labelledby="ist-existing-nft-tab">
                             <h2 className="text-4xl font-extrabold mb-6 mt-8">List existed <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">NFT</span></h2>
                             <ExistingNFTForm
-                                approveAndListNftCallback={ approveAndListFormNft }
+                                showProgress={ showExistingNftProgress() }
+                                newNftState={ newNftState }
+                                mintingNftStatusUIData={ mintingNftStatusUIData() }
+                                pendingTransactionHash={ pendingTransactionHash }
                                 svgNftMintFee={ svgNftMintFee }
+                                approveAndListNftCallback={ approveAndListFormNft }
                             />
                         </div>
                     </div>

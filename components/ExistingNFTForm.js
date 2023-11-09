@@ -1,7 +1,15 @@
 import { Form } from "web3uikit";
 import { ethers } from "ethers";
+import ListingProgressBar from "../components/ListingProgressBar";
 
-export default function ExistingNFTForm({ approveAndListNftCallback, svgNftMintFee }) {
+export default function ExistingNFTForm({
+    showProgress,
+    newNftState,
+    mintingNftStatusUIData,
+    pendingTransactionHash,
+    svgNftMintFee,
+    approveAndListNftCallback
+}) {
     const formInputsData = [
         {
             name: "NFT Address",
@@ -37,11 +45,21 @@ export default function ExistingNFTForm({ approveAndListNftCallback, svgNftMintF
     ];
 
     return (
-        <Form
-            onSubmit={ approveAndListNftCallback }
-            data={ formInputsData }
-            id="NFT Form"
-            buttonConfig={ { theme: 'primary' } }
-        />
+        <div>
+            <ListingProgressBar
+                showProgress={ showProgress }
+                newNftState={ newNftState }
+                pendingTransactionHash={ pendingTransactionHash }
+                progressInfo={ mintingNftStatusUIData["progressInfo"] }
+                progressBarPercentage={ mintingNftStatusUIData["progressBarPercentage"] }
+                progressBarText={ mintingNftStatusUIData["progressBarText"] }
+            />
+            <Form
+                onSubmit={ approveAndListNftCallback }
+                data={ formInputsData }
+                id="NFT Form"
+                buttonConfig={ { theme: 'primary' } }
+            />
+        </div>
     );
 }
