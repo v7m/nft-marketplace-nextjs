@@ -74,9 +74,9 @@ export default function Home() {
     async function approveAndListFormNft(data) {
         setNftProcessing('processForm');
 
-        const nftAddress = data.data[0].inputResult;
-        const tokenId = data.data[1].inputResult;
-        const price = ethers.utils.parseUnits(data.data[2].inputResult, "ether").toString();
+        const nftAddress = data.nftAddress;
+        const tokenId = data.tokenId;
+        const price = ethers.utils.parseUnits(data.price, "ether").toString();
 
         switch (nftAddress) {
             case dynamicSvgNftAddress:
@@ -325,8 +325,8 @@ export default function Home() {
         return (nftProcessing.matches('dynamic') && !newNftState.matches('idle'));
     }
 
-    const showExistingNftProgress = () => {
-        return (nftProcessing.matches('form') && !newNftState.matches('idle'));
+    const buttonDisabled = () => {
+        return !["idle", "listed"].some(newNftState.matches);
     }
 
     useEffect(() => {
@@ -424,6 +424,7 @@ export default function Home() {
                             <div className="mb-6">
                                 <h3 className="text-xl font-bold mb-3">Basic IPFS NFT (free)</h3>
                                 <NewNFTButton
+                                    buttonDisabled={ buttonDisabled() }
                                     showProgress={ showBasicNftProgress() }
                                     newNftState={ newNftState }
                                     mintingNftStatusUIData={ mintingNftStatusUIData() }
@@ -434,6 +435,7 @@ export default function Home() {
                             <div className="mb-6">
                                 <h3 className="text-xl font-bold mb-5">Dynamic on-chain SVG NFT (0.01 ETH)</h3>
                                 <NewNFTButton
+                                    buttonDisabled={ buttonDisabled() }
                                     showProgress={ showDynamicNftProgress() }
                                     newNftState={ newNftState }
                                     mintingNftStatusUIData={ mintingNftStatusUIData() }
@@ -446,11 +448,14 @@ export default function Home() {
                         <div className="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="list-existing-nft-form" role="tabpanel" aria-labelledby="ist-existing-nft-tab">
                             <h2 className="text-4xl font-extrabold mb-6 mt-8">List existed <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">NFT</span></h2>
                             <ExistingNFTForm
-                                showProgress={ showExistingNftProgress() }
+                                buttonDisabled={ buttonDisabled() }
+                                nftProcessing={ nftProcessing }
                                 newNftState={ newNftState }
                                 mintingNftStatusUIData={ mintingNftStatusUIData() }
                                 pendingTransactionHash={ pendingTransactionHash }
                                 svgNftMintFee={ svgNftMintFee }
+                                dynamicSvgNftAddress={ dynamicSvgNftAddress }
+                                basicIpfsNftAddress={ basicIpfsNftAddress }
                                 approveAndListNftCallback={ approveAndListFormNft }
                             />
                         </div>

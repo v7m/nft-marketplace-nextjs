@@ -2,15 +2,13 @@ import { Button } from "web3uikit";
 import ListingProgressBar from "../components/ListingProgressBar";
 
 export default function NewNFTButton({
+    buttonDisabled,
     showProgress,
     newNftState,
     mintingNftStatusUIData,
     pendingTransactionHash,
     mintNftCallback
 }) {
-    const buttonDisable = () => {
-        return !["idle", "listed"].some(newNftState.matches);
-    }
 
     return (
         <div>
@@ -23,16 +21,14 @@ export default function NewNFTButton({
                 progressBarText={ mintingNftStatusUIData["progressBarText"] }
             />
 
-            <div className="pl-4">
-                <Button
-                    color="blue"
-                    text="Mint & List NFT"
-                    theme="colored"
-                    size="large"
-                    disabled={ buttonDisable() }
-                    onClick={ mintNftCallback }
-                />
-            </div>
+            <Button
+                color="blue"
+                text="Mint & List NFT"
+                theme="colored"
+                size="large"
+                disabled={ buttonDisabled }
+                onClick={ mintNftCallback }
+            />
         </div>
     );
 }

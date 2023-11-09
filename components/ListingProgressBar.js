@@ -46,7 +46,7 @@ export default function ListingProgressBar({
     return (
         <div>
             { showProgress ? (
-                <div className="mb-6 px-4">
+                <div className="mb-6">
                     <div className="italic text-sm mb-2">
                         { progressInfo }
                         { pendingTransactionHash ? pendingTransactionTextElement() : null }
