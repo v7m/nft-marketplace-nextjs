@@ -1,12 +1,57 @@
 import { Form, useNotification, Button } from "web3uikit";
 import { useMoralis, useWeb3Contract } from "react-moralis";
 import { ethers } from "ethers";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { createMachine, assign } from "xstate";
+import { useMachine } from "@xstate/react";
+import { Tabs } from 'flowbite';
 import styles from "../styles/Home.module.css";
 import nftMarketplaceAbi from "../constants/NftMarketplaceAbi.json";
 import dynamicSvgNftAbi from "../constants/DynamicSvgNftAbi.json";
 import basicIpfsNftAbi from "../constants/BasicIpfsNftAbi.json";
 import networkMapping from "../constants/networkMapping.json";
+
+const mintAndListNftStateMachine = createMachine({
+    id: "mint-and-list-nft",
+    initial: "idle",
+    on: {
+        requestInitiated: "requested",
+        mintingInitiated: "minting",
+        mintingCompleted: "minted",
+        approvingInitiated: "approving",
+        approvingCompleted: "approved",
+        listingInitiated: "listing",
+        listingCompleted: "listed",
+        requestCompleted: "idle"
+    },
+    states: {
+        idle: {},
+        requested: {},
+        minting: {},
+        minted: {},
+        approving: {},
+        approved: {},
+        listing: {},
+        listed: {}
+    }
+});
+
+const nftProcessingStateMachine = createMachine({
+    id: "nft-processing",
+    initial: "none",
+    on: {
+        processNone: "none",
+        processBasic: "basic",
+        processDynamic: "dynamic",
+        processForm: "form"
+    },
+    states: {
+        none: {},
+        basic: {},
+        dynamic: {},
+        form: {}
+    }
+});
 
 export default function Home() {
     const { chainId, account, isWeb3Enabled } = useMoralis();
@@ -16,11 +61,15 @@ export default function Home() {
     const basicIpfsNftAddress = networkMapping[chainString]["BasicIpfsNft"].slice(-1)[0];
     const dispatch = useNotification();
     const { runContractFunction } = useWeb3Contract();
+    const [newNftState, setNewNftState] = useMachine(mintAndListNftStateMachine);
+    const [nftProcessing, setNftProcessing] = useMachine(nftProcessingStateMachine);
     const [provider, setProvider] = useState({});
     const [svgNftMintFee, setSvgNftMintFee] = useState("0");
 
+    // APPROVE AND LIST FUNCTIONS
+
     async function approveAndListFormNft(data) {
-        console.log("Approving NFT from form...");
+        setNftProcessing('processForm');
 
         const nftAddress = data.data[0].inputResult;
         const tokenId = data.data[1].inputResult;
@@ -39,7 +88,6 @@ export default function Home() {
     }
 
     async function approveAndListBasicNft(tokenId, price = svgNftMintFee) {
-        console.log("Approving Basic IPFS  NFT...");
         await runContractFunction({
             params: {
                 abi: basicIpfsNftAbi,
@@ -51,13 +99,11 @@ export default function Home() {
                 },
             },
             onSuccess: (tx) => handleApproveSuccess(tx, basicIpfsNftAddress, tokenId, price),
-            onError: (error) => { console.log(error) },
+            onError: (error) => handleTransactionError(error),
         });
     }
 
     async function approveAndListDynamicSvgNft(tokenId, price = svgNftMintFee) {
-        console.log("Approving minted SVG NFT...");
-
         await runContractFunction({
             params: {
                 abi: dynamicSvgNftAbi,
@@ -69,11 +115,16 @@ export default function Home() {
                 },
             },
             onSuccess: (tx) => handleApproveSuccess(tx, dynamicSvgNftAddress, tokenId, price),
-            onError: (error) => { console.log(error) },
+            onError: (error) => { handleTransactionError(error) },
         });
     }
 
-    async function requestSvgNftMint() {
+    // MINT FUNCTIONS
+
+    async function requestDynamicSvgNftMint() {
+        setNftProcessing('processDynamic');
+        setNewNftState('requestInitiated');
+
         const dynamicSvgNftContract = new ethers.Contract(dynamicSvgNftAddress, dynamicSvgNftAbi, provider);
 
         const nftMintedFilter = {
@@ -82,6 +133,7 @@ export default function Home() {
         }
 
         dynamicSvgNftContract.once(nftMintedFilter, (tokenId, minter, event) => {
+            setNewNftState('mintingCompleted');
             handleMintSvgNftSuccessNotification();
             approveAndListDynamicSvgNft(tokenId);
         });
@@ -94,13 +146,15 @@ export default function Home() {
                 msgValue: svgNftMintFee,
                 params: {},
             },
-            onError: (error) => console.log(error),
-            onSuccess: handleRequestSvgNftMintSuccessNotification,
+            onSuccess: (tx) => handleRequestSvgNftMintSuccess(tx),
+            onError: (error) => handleTransactionError(error),
         });
     }
 
     async function mintBasicIpfsNft() {
-        console.log("Minting Basic IPFS  NFT...");
+        setNftProcessing('processBasic');
+        setNewNftState('requestInitiated');
+
         await runContractFunction({
             params: {
                 abi: basicIpfsNftAbi,
@@ -108,14 +162,17 @@ export default function Home() {
                 functionName: "mintNft",
                 params: {},
             },
-            onError: (error) => console.log(error),
             onSuccess: (tx) => handleMintBasicIpfsNftSuccess(tx),
+            onError: (error) => handleTransactionError(error),
         });
     }
 
+    // HANDLE SUCCESS/ERROR FUNCTIONS
+
     async function handleApproveSuccess(tx, nftAddress, tokenId, price) {
-        console.log("Listing NFT...");
+        setNewNftState('approvingInitiated')
         await tx.wait(1);
+        setNewNftState('approvingCompleted');
 
         await runContractFunction({
             params: {
@@ -128,21 +185,47 @@ export default function Home() {
                     price: price,
                 },
             },
-            onSuccess: handleListSuccessNotification,
-            onError: (error) => console.log(error),
+            onSuccess: (tx) => handleListingSuccess(tx),
+            onError: (error) => handleTransactionError(error),
         });
     }
 
-    async function handleMintBasicIpfsNftSuccess(tx) {
-        handleMintBasicIpfsNftSuccessNotification();
-        const mintTxReceipt = await tx.wait(1);
-        const tokenId = mintTxReceipt.events[0].args.tokenId;
-
-        await approveAndListBasicNft(tokenId);
+    async function handleListingSuccess(tx) {
+        setNewNftState('listingInitiated');
+        await tx.wait(1);
+        setNftProcessing('processNone');
+        setNewNftState('listingCompleted');
+        handleListSuccessNotification();
     }
 
+    async function handleMintBasicIpfsNftSuccess(tx) {
+        setNewNftState('mintingInitiated');
+
+        const mintTxReceipt = await tx.wait(1);
+
+        setNewNftState('mintingCompleted');
+        handleMintBasicIpfsNftSuccessNotification();
+
+        const tokenId = mintTxReceipt.events[0].args.tokenId;
+
+        approveAndListBasicNft(tokenId);
+    }
+
+    async function handleRequestSvgNftMintSuccess(tx) {
+        setNewNftState('mintingInitiated');
+        await tx.wait(1);
+        handleRequestSvgNftMintSuccessNotification();
+    }
+
+    const handleTransactionError = (error) => {
+        console.log(error);
+        setNewNftState('requestCompleted');
+    }
+
+
+    // NOTIFICATIONS
+
     async function handleListSuccessNotification() {
-        console.log("NFT listed!");
         dispatch({
             type: "success",
             message: "NFT successfully listed",
@@ -152,17 +235,15 @@ export default function Home() {
     }
 
     const handleMintBasicIpfsNftSuccessNotification = () => {
-        console.log("Basic IPFS NFT minted");
         dispatch({
             type: "success",
             message: "You can find it in the gallery",
-            title: "Basic IPFS NFT mintedd",
+            title: "Basic IPFS NFT minted",
             position: "topR",
         });
     }
 
     const handleRequestSvgNftMintSuccessNotification = () => {
-        console.log("Mint Dynamic SVG NFT requested");
         dispatch({
             type: "success",
             message: "SVG NFT mint request sent. Please wait...",
@@ -172,7 +253,6 @@ export default function Home() {
     }
 
     const handleMintSvgNftSuccessNotification = () => {
-        console.log("Dynamic SVG NFT minted");
         dispatch({
             type: "success",
             message: "You can find it in the gallery",
@@ -180,6 +260,8 @@ export default function Home() {
             position: "topR",
         });
     }
+
+    // UI FUNCTIONS
 
     async function setupUI() {
         const svgNftMintFee = await runContractFunction({
@@ -195,14 +277,109 @@ export default function Home() {
         if (svgNftMintFee) {
             setSvgNftMintFee(svgNftMintFee);
         }
+
+        setUpTabs();
     }
 
-    useEffect(() => {
-        if (isWeb3Enabled) {
-            setProvider(new ethers.providers.Web3Provider(window.ethereum));
-            setupUI();
+    const buttonDisable = () => {
+        return !["idle", "listed"].some(newNftState.matches);
+    }
+
+    const mintAndListStatusUIData = () => {
+        const data = {
+            idle: {
+                info: "",
+                progress: 0,
+                progressText: "",
+                buttonText: "Mint & List NFT",
+            },
+            requested: {
+                info: "Please confirm the NFT mint in your wallet.",
+                progress: 4,
+                progressText: "",
+                buttonText: "NFT Minting...",
+            },
+            minting: {
+                info: "Pending transaction confirmation...",
+                progress: 17,
+                progressText: "Minting...",
+                buttonText: "NFT Minting...",
+            },
+            minted: {
+                info: "NFT successfully minted. Please confirm the NFT approving in your wallet.",
+                progress: 34,
+                progressText: "Approving...",
+                buttonText: "NFT Approving...",
+            },
+            approving: {
+                info: "Pending transaction confirmation...",
+                progress: 50,
+                progressText: "Approving...",
+                buttonText: "NFT Approving...",
+            },
+            approved: {
+                info: "NFT successfully approved. Please confirm the NFT listing in your wallet.",
+                progress: 66,
+                progressText: "Listing...",
+                buttonText: "NFT Listing...",
+            },
+            listing: {
+                info: "Pending transaction confirmation...",
+                progress: 84,
+                progressText: "Listing...",
+                buttonText: "NFT Listing...",
+            },
+            listed: {
+            info: "NFT successfully listed on marketplace!",
+                progress: 100,
+                progressText: "Completed!",
+                buttonText: "Mint & List NFT",
+            },
         }
-    }, [ account, isWeb3Enabled, chainId]);
+
+        return data[newNftState.value];
+    }
+
+    const setUpTabs = () => {
+        const tabsElement = document.getElementById('list-nft');
+
+        const tabElements = [
+            {
+                id: 'list-new-nft',
+                triggerEl: document.querySelector('#list-new-nft-tab'),
+                targetEl: document.querySelector('#list-new-nft-form')
+            },
+            {
+                id: 'list-existing-nft',
+                triggerEl: document.querySelector('#list-existing-nft-tab'),
+                targetEl: document.querySelector('#list-existing-nft-form')
+            },
+        ];
+
+        const tabsOptions = {
+            defaultTabId: 'list-new-nft',
+            activeClasses: 'text-blue-600 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400 border-blue-600 dark:border-blue-500',
+            inactiveClasses: 'text-gray-500 hover:text-gray-600 dark:text-gray-400 border-gray-100 hover:border-gray-300 dark:border-gray-700 dark:hover:text-gray-300',
+        };
+
+        new Tabs(tabsElement, tabElements, tabsOptions);
+    }
+
+    const showBasicNftProgress = () => {
+        return (nftProcessing.matches('basic') && !newNftState.matches('idle'))
+    }
+
+    const showDynamicNftProgress = () => {
+        return (nftProcessing.matches('dynamic') && !newNftState.matches('idle'));
+    }
+
+    const showSpinner = () => {
+        return !["idle", "completed"].some(newNftState.matches);
+    }
+
+    const showProgressText = () => {
+        return !["idle", "requested"].some(newNftState.matches);
+    }
 
     const formInputsData = [
         {
@@ -238,37 +415,130 @@ export default function Home() {
         },
     ];
 
+    useEffect(() => {
+        if (isWeb3Enabled) {
+            setProvider(new ethers.providers.Web3Provider(window.ethereum));
+            setupUI();
+        }
+    }, [ account, isWeb3Enabled, chainId]);
+
     return (
         <div className={ styles.container }>
             <div className="grid grid-cols-7 gap-4">
                 <div className="col-start-2 col-span-4">
-                    <h2 className="text-4xl font-extrabold mb-6 mt-8">Mint and List new <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">NFT</span></h2>
-                    <p className="mb-6 mt-3">Minting and listing NFTs for trading on the marketplace requires several transactions and will take a while.</p>
-                    <div className="mb-6 pl-4">
-                        <Button
-                            color="blue"
-                            text="Mint Basic IPFS NFT (free)"
-                            theme="colored"
-                            size="large"
-                            onClick={ mintBasicIpfsNft }
-                        />
+                    <div className="mb-4 border-b w-fit border-gray-200 dark:border-gray-700">
+                        <ul className="flex flex-wrap -mb-px text-lg font-medium text-center text-gray-500 dark:text-gray-400" id="list-nft" role="tablist">
+                            <li className="mr-2" role="presentation">
+                                <button
+                                    className="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                    id="list-new-nft-tab"
+                                    type="button"
+                                    role="tab"
+                                >
+                                    New NFT
+                                </button>
+                            </li>
+                            <li className="mr-2" role="presentation">
+                                <button
+                                    className="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                    id="list-existing-nft-tab"
+                                    type="button"
+                                    role="tab"
+                                >
+                                    Existing NFT
+                                </button>
+                            </li>
+                        </ul>
                     </div>
-                    <div className="mb-9 pl-4">
-                        <Button
-                            color="blue"
-                            text="Mint random on-chain SVG NFT (0.01 ETH)"
-                            theme="colored"
-                            size="large"
-                            onClick={ requestSvgNftMint }
-                        />
+                    <div id="list-nft">
+                        <div className="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="list-new-nft-form" role="tabpanel" aria-labelledby="list-new-nft-tab">
+                            <h2 className="text-4xl font-extrabold mb-6 mt-8">Mint and List new <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">NFT</span></h2>
+                            <div className="mb-6">
+                                <h3 className="text-xl font-bold mb-3">Basic IPFS NFT (free)</h3>
+                                <div>
+                                    { showBasicNftProgress() ? (
+                                        <div className="mb-6 px-4">
+                                            <div className="italic text-sm mb-2">{ mintAndListStatusUIData()["info"] }</div>
+                                            <div className="w-full bg-gray-200 rounded-full dark:bg-gray-700">
+                                                <div className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={ { width: `${ mintAndListStatusUIData()["progress"] }%` } }>
+                                                    <div>
+                                                        { showSpinner() ? <div className="inline-block mx-auto animate-spin spinner-border h-2 w-2 border-b-2 border-blue-400 rounded-full"></div> : null }
+                                                        { showProgressText() ? (
+                                                            <div className="inline-block ml-2">
+                                                                { mintAndListStatusUIData()["progressText"] }
+                                                            </div>
+                                                        ) : (
+                                                            null
+                                                        ) }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        ) : (
+                                        null
+                                    ) }
+
+                                    <div className="pl-4">
+                                        <Button
+                                            color="blue"
+                                            text="Mint & List NFT"
+                                            theme="colored"
+                                            size="large"
+                                            disabled={ buttonDisable() }
+                                            onClick={ mintBasicIpfsNft }
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mb-6">
+                                <h3 className="text-xl font-bold mb-5">Random on-chain SVG NFT (0.01 ETH)</h3>
+                                <div>
+                                    { showDynamicNftProgress() ? (
+                                        <div className="mb-6 px-4">
+                                            <div className="italic text-sm mb-2">{ mintAndListStatusUIData()["info"] }</div>
+                                            <div className="w-full bg-gray-200 rounded-full dark:bg-gray-700">
+                                                <div className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={ { width: `${ mintAndListStatusUIData()["progress"] }%` } }>
+                                                    <div>
+                                                        { showSpinner() ? <div className="inline-block mx-auto animate-spin spinner-border h-2 w-2 border-b-2 border-blue-400 rounded-full"></div> : null }
+                                                        { showProgressText() ? (
+                                                            <div className="inline-block ml-2">
+                                                                { mintAndListStatusUIData()["progressText"] }
+                                                            </div>
+                                                        ) : (
+                                                            null
+                                                        ) }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        null
+                                    ) }
+
+                                    <div className="pl-4">
+                                        <Button
+                                            color="blue"
+                                            text="Mint & List NFT"
+                                            theme="colored"
+                                            size="large"
+                                            disabled={ buttonDisable() }
+                                            onClick={ requestDynamicSvgNftMint }
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div className="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="list-existing-nft-form" role="tabpanel" aria-labelledby="ist-existing-nft-tab">
+                            <h2 className="text-4xl font-extrabold mb-6 mt-8">List existed <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">NFT</span></h2>
+                            <Form
+                                onSubmit={ approveAndListFormNft }
+                                data={ formInputsData }
+                                id="NFT Form"
+                                buttonConfig={ { theme: 'primary' } }
+                            />
+                        </div>
                     </div>
-                    <h2 className="text-4xl font-extrabold mb-6">List existed <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">NFT</span></h2>
-                    <Form
-                        onSubmit={ approveAndListFormNft }
-                        data={ formInputsData }
-                        id="NFT Form"
-                        buttonConfig={ { theme: 'primary' } }
-                    />
                 </div>
             </div>
         </div>
