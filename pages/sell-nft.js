@@ -10,8 +10,7 @@ import nftMarketplaceAbi from "../constants/NftMarketplaceAbi.json";
 import dynamicSvgNftAbi from "../constants/DynamicSvgNftAbi.json";
 import basicIpfsNftAbi from "../constants/BasicIpfsNftAbi.json";
 import networkMapping from "../constants/networkMapping.json";
-
-const ETHERSCAN_URL_PREFIX = "https://sepolia.etherscan.io/tx/";
+import ListNewNFTButton from "../components/ListNewNFTButton"
 
 const mintAndListNftStateMachine = createMachine({
     id: "mint-and-list-nft",
@@ -68,7 +67,6 @@ export default function Home() {
     const [provider, setProvider] = useState({});
     const [svgNftMintFee, setSvgNftMintFee] = useState("0");
     const [pendingTransactionHash, setPendingTransactionHash] = useState(null);
-
 
     // APPROVE AND LIST FUNCTIONS
 
@@ -293,65 +291,6 @@ export default function Home() {
         setUpTabs();
     }
 
-    const buttonDisable = () => {
-        return !["idle", "listed"].some(newNftState.matches);
-    }
-
-    const mintAndListStatusUIData = () => {
-        const data = {
-            idle: {
-                info: "",
-                progress: 0,
-                progressText: "",
-                buttonText: "Mint & List NFT",
-            },
-            requested: {
-                info: "Please confirm the NFT mint in your wallet.",
-                progress: 4,
-                progressText: "",
-                buttonText: "NFT Minting...",
-            },
-            minting: {
-                info: "Pending transaction confirmation...",
-                progress: 17,
-                progressText: "Minting...",
-                buttonText: "NFT Minting...",
-            },
-            minted: {
-                info: "NFT successfully minted. Please confirm the NFT approving in your wallet.",
-                progress: 34,
-                progressText: "Approving...",
-                buttonText: "NFT Approving...",
-            },
-            approving: {
-                info: "Pending transaction confirmation...",
-                progress: 50,
-                progressText: "Approving...",
-                buttonText: "NFT Approving...",
-            },
-            approved: {
-                info: "NFT successfully approved. Please confirm the NFT listing in your wallet.",
-                progress: 66,
-                progressText: "Listing...",
-                buttonText: "NFT Listing...",
-            },
-            listing: {
-                info: "Pending transaction confirmation...",
-                progress: 84,
-                progressText: "Listing...",
-                buttonText: "NFT Listing...",
-            },
-            listed: {
-            info: "NFT successfully listed on marketplace!",
-                progress: 100,
-                progressText: "Completed!",
-                buttonText: "Mint & List NFT",
-            },
-        }
-
-        return data[newNftState.value];
-    }
-
     const setUpTabs = () => {
         const tabsElement = document.getElementById('list-nft');
 
@@ -383,18 +322,6 @@ export default function Home() {
 
     const showDynamicNftProgress = () => {
         return (nftProcessing.matches('dynamic') && !newNftState.matches('idle'));
-    }
-
-    const showSpinner = () => {
-        return !["idle", "completed"].some(newNftState.matches);
-    }
-
-    const showProgressText = () => {
-        return !["idle", "requested"].some(newNftState.matches);
-    }
-
-    const pendingTransactionUrl = () => {
-        return ETHERSCAN_URL_PREFIX + pendingTransactionHash;
     }
 
     const formInputsData = [
@@ -471,97 +398,21 @@ export default function Home() {
                             <h2 className="text-4xl font-extrabold mb-6 mt-8">Mint and List new <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">NFT</span></h2>
                             <div className="mb-6">
                                 <h3 className="text-xl font-bold mb-3">Basic IPFS NFT (free)</h3>
-                                <div>
-                                    { showBasicNftProgress() ? (
-                                        <div className="mb-6 px-4">
-                                            <div className="italic text-sm mb-2">
-                                                { mintAndListStatusUIData()["info"] }
-                                                { pendingTransactionHash ? (
-                                                    <span>
-                                                        &nbsp;Check on&nbsp;
-                                                        <a href={ pendingTransactionUrl() } className="font-medium text-blue-600 dark:text-blue-500 hover:underline" target="_blank">Etherscan</a>.
-                                                    </span>
-                                                ) : (
-                                                    null
-                                                ) }
-                                            </div>
-                                            <div className="w-full bg-gray-200 rounded-full dark:bg-gray-700">
-                                                <div className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={ { width: `${ mintAndListStatusUIData()["progress"] }%` } }>
-                                                    <div>
-                                                        { showSpinner() ? <div className="inline-block mx-auto animate-spin spinner-border h-2 w-2 border-b-2 border-blue-400 rounded-full"></div> : null }
-                                                        { showProgressText() ? (
-                                                            <div className="inline-block ml-2">
-                                                                { mintAndListStatusUIData()["progressText"] }
-                                                            </div>
-                                                        ) : (
-                                                            null
-                                                        ) }
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        ) : (
-                                        null
-                                    ) }
-
-                                    <div className="pl-4">
-                                        <Button
-                                            color="blue"
-                                            text="Mint & List NFT"
-                                            theme="colored"
-                                            size="large"
-                                            disabled={ buttonDisable() }
-                                            onClick={ mintBasicIpfsNft }
-                                        />
-                                    </div>
-                                </div>
+                                <ListNewNFTButton
+                                    showProgress={ showBasicNftProgress() }
+                                    newNftState={ newNftState }
+                                    pendingTransactionHash={ pendingTransactionHash }
+                                    mintNftCallback={ mintBasicIpfsNft }
+                                />
                             </div>
                             <div className="mb-6">
                                 <h3 className="text-xl font-bold mb-5">Dynamic on-chain SVG NFT (0.01 ETH)</h3>
-                                <div>
-                                    { showDynamicNftProgress() ? (
-                                        <div className="mb-6 px-4">
-                                            <div className="italic text-sm mb-2">
-                                                { mintAndListStatusUIData()["info"] }
-                                                { pendingTransactionHash ? (
-                                                    <span>
-                                                        &nbsp;Check on&nbsp;
-                                                        <a href={ pendingTransactionUrl() } className="font-medium text-blue-600 dark:text-blue-500 hover:underline" target="_blank">Etherscan</a>.
-                                                    </span>
-                                                ) : (
-                                                    null
-                                                ) }
-                                            </div>
-                                            <div className="w-full bg-gray-200 rounded-full dark:bg-gray-700">
-                                                <div className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={ { width: `${ mintAndListStatusUIData()["progress"] }%` } }>
-                                                    <div>
-                                                        { showSpinner() ? <div className="inline-block mx-auto animate-spin spinner-border h-2 w-2 border-b-2 border-blue-400 rounded-full"></div> : null }
-                                                        { showProgressText() ? (
-                                                            <div className="inline-block ml-2">
-                                                                { mintAndListStatusUIData()["progressText"] }
-                                                            </div>
-                                                        ) : (
-                                                            null
-                                                        ) }
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        null
-                                    ) }
-
-                                    <div className="pl-4">
-                                        <Button
-                                            color="blue"
-                                            text="Mint & List NFT"
-                                            theme="colored"
-                                            size="large"
-                                            disabled={ buttonDisable() }
-                                            onClick={ requestDynamicSvgNftMint }
-                                        />
-                                    </div>
-                                </div>
+                                <ListNewNFTButton
+                                    showProgress={ showDynamicNftProgress() }
+                                    newNftState={ newNftState }
+                                    pendingTransactionHash={ pendingTransactionHash }
+                                    mintNftCallback={ requestDynamicSvgNftMint }
+                                />
                             </div>
 
                         </div>
