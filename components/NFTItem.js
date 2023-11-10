@@ -77,15 +77,6 @@ export default function NFTItem({ price, nftAddress, tokenId, nftMarketplaceAddr
         }
     }
 
-    useEffect(() => {
-        if (isWeb3Enabled) {
-            updateUI();
-        }
-    }, [isWeb3Enabled]);
-
-    const isOwnedByUser = seller === account || seller === undefined;
-    const formattedSellerAddress = isOwnedByUser ? "you" : truncateString(seller || "", 15);
-
     const handleCardClick = () => {
         if (isOwnedByUser) {
             setShowModal(true);
@@ -106,9 +97,15 @@ export default function NFTItem({ price, nftAddress, tokenId, nftMarketplaceAddr
         });
     }
 
-    const nftImageSrc = () => {
-        return (imageURI || svgImage);
-    }
+    useEffect(() => {
+        if (isWeb3Enabled) {
+            updateUI();
+        }
+    }, [isWeb3Enabled]);
+
+    const isOwnedByUser = seller === account || seller === undefined;
+    const formattedSellerAddress = isOwnedByUser ? "you" : truncateString(seller || "", 15);
+    const nftImageSrc = (imageURI || svgImage);
 
     return (
         <div>
@@ -137,7 +134,7 @@ export default function NFTItem({ price, nftAddress, tokenId, nftMarketplaceAddr
                                     <div className="italic text-sm">
                                         Owner: { formattedSellerAddress }
                                     </div>
-                                    <img src={ nftImageSrc() } width={ 200 } height={ 200 } />
+                                    <img src={ nftImageSrc } width={ 200 } height={ 200 } />
                                     <div className="font-bold">
                                         { ethers.utils.formatUnits(price, "ether") } ETH
                                     </div>
