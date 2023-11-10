@@ -1,26 +1,11 @@
 import { useState, useEffect } from "react";
 import { useWeb3Contract, useMoralis } from "react-moralis";
 import { ethers } from "ethers";
+import truncateString from "../utils/truncateString.js";
 import nftMarketplaceAbi from "../constants/NftMarketplaceAbi.json";
 import basicIpfsNftAbi from "../constants/BasicIpfsNftAbi.json";
 import { Card, useNotification } from "web3uikit";
 import UpdateListingModal from "./UpdateListingModal";
-
-const truncateStr = (fullStr, strLength) => {
-    if (fullStr.length <= strLength) return fullStr;
-
-    const separator = "...";
-    const seperatorLength = separator.length;
-    const charsToShow = strLength - seperatorLength;
-    const frontChars = Math.ceil(charsToShow / 2);
-    const backChars = Math.floor(charsToShow / 2);
-    const truncateStrBegin = fullStr.substring(0, frontChars);
-    const truncateStrEnd = fullStr.substring(fullStr.length - backChars);
-
-    return (
-        truncateStrBegin + separator + truncateStrEnd
-    );
-}
 
 export default function NFTItem({ price, nftAddress, tokenId, nftMarketplaceAddress, seller }) {
     const { isWeb3Enabled, account } = useMoralis();
@@ -99,7 +84,7 @@ export default function NFTItem({ price, nftAddress, tokenId, nftMarketplaceAddr
     }, [isWeb3Enabled]);
 
     const isOwnedByUser = seller === account || seller === undefined;
-    const formattedSellerAddress = isOwnedByUser ? "you" : truncateStr(seller || "", 15);
+    const formattedSellerAddress = isOwnedByUser ? "you" : truncateString(seller || "", 15);
 
     const handleCardClick = () => {
         if (isOwnedByUser) {
