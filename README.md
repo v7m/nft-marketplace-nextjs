@@ -15,14 +15,16 @@ The NFT Marketplace project consists of 3 parts:
     <img src="readme-images/sell-nft.png" alt="image" width="400" height="auto">
 </p>
 
-## NFT Marketplace Features:
+# Description:
 
-- Compatible with various web3 wallets.
-- Trade various NFT types: Basic (IPFS hosted) and Dynamic SVG (on-chain storage).
-- Buy NFT tokens listed by others or set your own price when selling.
-- Easily modify your price or cancel a listing for your tokens at any time.
-- Users can mint and list new NFTs directly within the marketplace.
-- Sellers have full control over their trading earnings, which are withdrawable at any time.
+NFT Marketplace is a cutting-edge platform designed for digital asset trading. The main features are:
+
+- **Wallets Integration**: The platform is compatible with various web3 wallets, enabling easy access for a diverse user base.
+- **Diverse NFT Support**: Users can trade various NFT types, including Basic (IPFS hosted) and Dynamic SVG (on-chain storage), catering to different preferences and needs.
+- **Direct Minting and Listing**: Users can mint and list new NFTs directly within the marketplace, streamlining the process from creation to sale.
+- **Flexible Trading Options**: Participants have the option to buy NFT tokens listed by others or set their own price when selling, providing a flexible and user-friendly trading experience.
+- **Dynamic Pricing Control**: Easily modify your price or cancel a listing for your tokens at any time, offering sellers increased control over their sales strategy.
+- **Revenue Management**: Sellers have full control over their trading earnings, which are withdrawable at any time, ensuring they have immediate access to their profits.
 
 ## Built with:
 - Solidity
